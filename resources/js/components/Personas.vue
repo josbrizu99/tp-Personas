@@ -2,40 +2,11 @@
     <div class="container mx-auto px-4 py-8">
         <h2 class="text-2xl font-bold mb-6">Lista de Personas</h2>
         
-        <!-- Formulario para agregar/editar persona -->
-        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h5 class="text-xl font-semibold mb-4">{{ isEditing ? 'Editar Persona' : 'Agregar Nueva Persona' }}</h5>
-            <form @submit.prevent="savePersona" class="space-y-4">
-                <div>
-                    <label for="nombre" class="block text-sm font-medium text-gray-700">Nombre</label>
-                    <input type="text" id="nombre" v-model="form.nombre" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label for="apellido" class="block text-sm font-medium text-gray-700">Apellido</label>
-                    <input type="text" id="apellido" v-model="form.apellido" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                </div>
-                <div>
-                    <label for="dni" class="block text-sm font-medium text-gray-700">DNI</label>
-                    <input type="text" id="dni" v-model="form.dni" required
-                        class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                </div>
-                <div class="flex space-x-4">
-                    <button type="submit"
-                        class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        {{ isEditing ? 'Actualizar' : 'Guardar' }}
-                    </button>
-                    <button type="button" @click="resetForm"
-                        class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
-                        Cancelar
-                    </button>
-                </div>
-            </form>
-        </div>
+        <!-- Aquí se mostrará el formulario completo de PersonaForm -->
+        <PersonaForm />
 
         <!-- Tabla de personas -->
-        <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="bg-white rounded-lg shadow-md overflow-hidden mt-6">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -66,17 +37,23 @@
 </template>
 
 <script>
+import PersonaForm from './PersonaForm.vue' // Importar PersonaForm
+
 export default {
+    components: {
+        PersonaForm // Registrar PersonaForm como un componente
+    },
     data() {
         return {
             personas: [],
-            form: {
-                id: null,
-                nombre: '',
-                apellido: '',
-                dni: ''
-            },
-            isEditing: false
+            // Ya no necesitamos el formulario aquí, PersonaForm lo manejará
+            // form: {
+            //     id: null,
+            //     nombre: '',
+            //     apellido: '',
+            //     dni: ''
+            // },
+            // isEditing: false
         }
     },
     mounted() {
@@ -91,35 +68,13 @@ export default {
                 console.error('Error al cargar personas:', error)
             }
         },
-        async savePersona() {
-            try {
-                const url = this.isEditing 
-                    ? `/api/personas/${this.form.id}`
-                    : '/api/personas'
-                
-                const method = this.isEditing ? 'PUT' : 'POST'
-                
-                const response = await fetch(url, {
-                    method,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                    },
-                    body: JSON.stringify(this.form)
-                })
-
-                if (response.ok) {
-                    await this.loadPersonas()
-                    this.resetForm()
-                }
-            } catch (error) {
-                console.error('Error al guardar persona:', error)
-            }
-        },
-        editPersona(persona) {
-            this.form = { ...persona }
-            this.isEditing = true
-        },
+        // Los métodos de guardar, editar y resetear formulario serán manejados por PersonaForm
+        // async savePersona() {
+        //     // ... (lógica movida a PersonaForm)
+        // },
+        // editPersona(persona) {
+        //     // ... (lógica movida a PersonaForm)
+        // },
         async deletePersona(id) {
             if (confirm('¿Está seguro de eliminar esta persona?')) {
                 try {
@@ -137,15 +92,6 @@ export default {
                     console.error('Error al eliminar persona:', error)
                 }
             }
-        },
-        resetForm() {
-            this.form = {
-                id: null,
-                nombre: '',
-                apellido: '',
-                dni: ''
-            }
-            this.isEditing = false
         }
     }
 }

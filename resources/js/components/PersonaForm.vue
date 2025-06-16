@@ -1,28 +1,25 @@
 <template>
     <div>
       <h2 class="text-2xl font-bold mb-4">Registro de Personas</h2>
-      <div class="border-b border-gray-200 mb-6">
+
+      <!-- Navegación por pestañas -->
+      <div class="mb-6 border-b border-gray-200">
         <nav class="-mb-px flex space-x-8" aria-label="Tabs">
-          <button
-            v-for="(tab, idx) in tabs"
-            :key="tab"
-            @click="activeTab = idx"
-            :class="[
-              'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm focus:outline-none',
-              activeTab === idx
-                ? 'border-indigo-500 text-indigo-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            ]"
-          >
+          <button v-for="(tab, index) in tabs" :key="tab"
+            @click="activeTab = index"
+            :class="[activeTab === index ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+              'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm']"
+            :aria-current="activeTab === index ? 'page' : undefined">
             {{ tab }}
           </button>
         </nav>
       </div>
-  
-      <div v-if="activeTab === 0">
-        <!-- Datos Personales -->
+
+      <!-- Contenido de las pestañas -->
+      <div v-show="activeTab === 0" class="mb-6 p-4 border border-gray-200 rounded-md">
+        <h3 class="text-lg font-bold mb-4">Datos Personales</h3>
         <form @submit.prevent="guardarPersona">
-          <div class="grid grid-cols-3 gap-4">
+          <div class="flex flex-col space-y-4">
             <div>
               <label class="block text-sm font-medium text-gray-700">Tipo de Persona</label>
               <select v-model="form.tipo_persona" class="mt-1 block w-full border-gray-300 rounded-md">
@@ -96,7 +93,7 @@
               <label class="block text-sm font-medium text-gray-700">Ocupación</label>
               <input v-model="form.ocupacion" type="text" class="mt-1 block w-full border-gray-300 rounded-md" />
             </div>
-            <div class="col-span-3">
+            <div>
               <label class="block text-sm font-medium text-gray-700">Email</label>
               <input v-model="form.email" type="email" class="mt-1 block w-full border-gray-300 rounded-md" />
             </div>
@@ -106,11 +103,12 @@
           </div>
         </form>
       </div>
-  
-      <div v-else-if="activeTab === 1">
-        <!-- Direcciones -->
+
+      <!-- Direcciones -->
+      <div v-show="activeTab === 1" class="mb-6 p-4 border border-gray-200 rounded-md">
+        <h3 class="text-lg font-bold mb-4">Direcciones</h3>
         <div class="space-y-4">
-          <div class="grid grid-cols-2 gap-4">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700">Fecha</label>
               <input type="date" v-model="currentAddress.fecha" class="mt-1 block w-full border-gray-300 rounded-md" />
@@ -141,7 +139,7 @@
               </select>
             </div>
           </div>
-  
+
           <div class="mt-6">
             <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">Geolocalización</h3>
             <div class="relative h-64 w-full bg-gray-100 rounded-md overflow-hidden">
@@ -153,7 +151,7 @@
             </div>
             <p class="mt-2 text-sm text-gray-600">Click derecho del mouse para indicar latitud y longitud de la ubicación.</p>
           </div>
-  
+
           <div class="mt-6">
             <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">Direcciones Registradas</h3>
             <div class="overflow-x-auto">
@@ -197,23 +195,26 @@
           </div>
         </div>
       </div>
-  
-      <div v-else-if="activeTab === 2">
-        <!-- Teléfonos -->
+
+      <!-- Teléfonos -->
+      <div v-show="activeTab === 2" class="mb-6 p-4 border border-gray-200 rounded-md">
+        <h3 class="text-lg font-bold mb-4">Teléfonos</h3>
         <div class="text-gray-500">Aquí irá el formulario de teléfonos.</div>
       </div>
-      <div v-else-if="activeTab === 3">
-        <!-- Trabajos -->
+
+      <!-- Trabajos -->
+      <div v-show="activeTab === 3" class="mb-6 p-4 border border-gray-200 rounded-md">
+        <h3 class="text-lg font-bold mb-4">Trabajos</h3>
         <div class="text-gray-500">Aquí irá el formulario de trabajos.</div>
       </div>
     </div>
   </template>
-  
+
   <script>
   import axios from 'axios';
-  import { LMap, LTileLayer, LMarker } from 'vue-leaflet';
+  import { LMap, LTileLayer, LMarker } from '@vue-leaflet/vue-leaflet';
   import 'leaflet/dist/leaflet.css';
-  
+
   export default {
     name: 'PersonaForm',
     components: {
@@ -247,15 +248,15 @@
           barrio: '',
           latitud: null,
           longitud: null,
-          id: null, // Para simular un ID si se guarda
-          ciudad: 'Villarrica', // Valor por defecto o a cargar dinámicamente
+          id: null,
+          ciudad: 'Villarrica',
           estado: 'Activo',
           fechabaja: ''
         },
         addresses: [],
         nacionalidades: [],
         ciudades: [],
-        barrios: [ // Datos de ejemplo, reemplazar con carga de API
+        barrios: [
           { id: 1, nombre: 'San Blas' },
           { id: 2, nombre: 'Centro' },
           { id: 3, nombre: 'Ybaroty' }
@@ -265,7 +266,6 @@
     mounted() {
       this.cargarNacionalidades();
       this.cargarCiudades();
-      // Aquí podrías cargar direcciones existentes si estás en modo edición
     },
     methods: {
       async cargarNacionalidades() {
@@ -285,7 +285,6 @@
         }
       },
       guardarPersona() {
-        // Lógica para guardar persona (incluyendo sus direcciones si se envían junto)
         alert('Persona guardada (demo)');
       },
       handleMapClick(event) {
@@ -302,16 +301,13 @@
       addAddress() {
         if (this.currentAddress.direccion && this.currentAddress.tipo_direccion && this.currentAddress.barrio) {
           const newAddress = { ...this.currentAddress };
-          // Asignar un ID simulado si es una nueva dirección
           if (!newAddress.id) {
             newAddress.id = this.addresses.length > 0 ? Math.max(...this.addresses.map(a => a.id || 0)) + 1 : 1;
           }
           const existingIndex = this.addresses.findIndex(addr => addr.id === newAddress.id);
           if (existingIndex !== -1) {
-            // Actualizar dirección existente
             this.addresses.splice(existingIndex, 1, newAddress);
           } else {
-            // Añadir nueva dirección
             this.addresses.push(newAddress);
           }
           this.clearAddress();
@@ -344,7 +340,7 @@
     }
   }
   </script>
-  
+
   <style>
   @import 'leaflet/dist/leaflet.css';
   </style>
