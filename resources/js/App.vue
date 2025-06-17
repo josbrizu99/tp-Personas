@@ -8,7 +8,7 @@
 </template>
 
 <script>
-import Personas from './components/Personas.vue'
+import Personas from './components/PersonaForm.vue'
 
 export default {
     name: 'App',
@@ -16,4 +16,4 @@ export default {
         Personas
     }
 }
-</script> 
+</script>
