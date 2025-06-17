@@ -6,7 +6,7 @@
       <div class="mb-6 border-b border-gray-200">
         <nav class="-mb-px flex space-x-8" aria-label="Tabs">
           <button v-for="(tab, index) in tabs" :key="tab"
-            @click="activeTab = index"
+            @click="selectTab(index)"
             :class="[activeTab === index ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
               'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm']"
             :aria-current="activeTab === index ? 'page' : undefined">
@@ -19,7 +19,7 @@
       <div v-show="activeTab === 0" class="mb-6 p-4 border border-gray-200 rounded-md">
         <h3 class="text-lg font-bold mb-4">Datos Personales</h3>
         <form @submit.prevent="guardarPersona">
-          <div class="flex flex-col space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label class="block text-sm font-medium text-gray-700">Tipo de Persona</label>
               <select v-model="form.tipo_persona" class="mt-1 block w-full border-gray-300 rounded-md">
@@ -40,7 +40,7 @@
               <label class="block text-sm font-medium text-gray-700">Nro. Doc. (sin DV)</label>
               <input v-model="form.nro_documento" type="text" class="mt-1 block w-full border-gray-300 rounded-md" />
             </div>
-            <div>
+            <div class="md:col-span-2">
               <label class="block text-sm font-medium text-gray-700">Nombre Completo</label>
               <input v-model="form.nombre_completo" type="text" class="mt-1 block w-full border-gray-300 rounded-md" />
             </div>
@@ -93,7 +93,7 @@
               <label class="block text-sm font-medium text-gray-700">Ocupación</label>
               <input v-model="form.ocupacion" type="text" class="mt-1 block w-full border-gray-300 rounded-md" />
             </div>
-            <div>
+            <div class="col-span-1 md:col-span-3">
               <label class="block text-sm font-medium text-gray-700">Email</label>
               <input v-model="form.email" type="email" class="mt-1 block w-full border-gray-300 rounded-md" />
             </div>
@@ -129,6 +129,13 @@
                 <option value="">Seleccione</option>
                 <option value="Domiciliario">Domiciliario</option>
                 <option value="Laboral">Laboral</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Ciudad</label>
+              <select v-model="currentAddress.ciudad" class="mt-1 block w-full border-gray-300 rounded-md">
+                <option value="">Seleccione</option>
+                <option v-for="ciudad in ciudades" :key="ciudad.id" :value="ciudad.nombre">{{ ciudad.nombre }}</option>
               </select>
             </div>
             <div>
@@ -191,6 +198,9 @@
                   </tr>
                 </tbody>
               </table>
+              <div class="mt-6 flex justify-end">
+                <button @click="saveAddresses" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Guardar Direcciones</button>
+              </div>
             </div>
           </div>
         </div>
@@ -199,13 +209,172 @@
       <!-- Teléfonos -->
       <div v-show="activeTab === 2" class="mb-6 p-4 border border-gray-200 rounded-md">
         <h3 class="text-lg font-bold mb-4">Teléfonos</h3>
-        <div class="text-gray-500">Aquí irá el formulario de teléfonos.</div>
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Tipo de Teléfono:</label>
+              <select v-model="currentPhone.tipo_telefono" class="mt-1 block w-full border-gray-300 rounded-md">
+                <option value="">Seleccione</option>
+                <option value="Particular">Particular</option>
+                <option value="Laboral">Laboral</option>
+                <option value="Celular">Celular</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Fecha Alta:</label>
+              <input type="date" v-model="currentPhone.fecha_alta" class="mt-1 block w-full border-gray-300 rounded-md" />
+            </div>
+            <div></div> <!-- Espacio en blanco para la cuadrícula -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Teléfono:</label>
+              <div class="flex">
+                <input type="text" v-model="currentPhone.nro_telefono" class="mt-1 block w-full border-gray-300 rounded-md" />
+                <button @click="addPhone" class="ml-2 bg-green-500 text-white p-2 rounded-md hover:bg-green-600"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M12 3.75a.75.75 0 0 1 .75.75v6.75h6.75a.75.75 0 0 1 0 1.5h-6.75v6.75a.75.75 0 0 1-1.5 0v-6.75H4.5a.75.75 0 0 1 0-1.5h6.75V4.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd" /></svg></button>
+                <button @click="clearPhone" class="ml-2 bg-red-500 text-white p-2 rounded-md hover:bg-red-600"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M16.5 4.478a.75.75 0 0 0-1.06-.943L12 7.022 8.56 3.535a.75.75 0 0 0-1.06.943L10.94 8l-3.44 3.465a.75.75 0 0 0 1.06.943L12 8.978l3.44 3.465a.75.75 0 0 0 1.06-.943L13.06 8l3.44-3.465Z" clip-rule="evenodd" /></svg></button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">A cargo de:</label>
+              <input type="text" v-model="currentPhone.a_nombre_de" class="mt-1 block w-full border-gray-300 rounded-md" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Estado:</label>
+              <select v-model="currentPhone.estado" class="mt-1 block w-full border-gray-300 rounded-md">
+                <option value="Activo">Activo</option>
+                <option value="Inactivo">Inactivo</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">Teléfonos Registrados</h3>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Alta</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo Teléfono</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nro. Teléfono</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">A Nombre De</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th scope="col" class="relative px-6 py-3">
+                      <span class="sr-only">Acciones</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-if="phones.length === 0">
+                    <td colspan="7" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No hay teléfonos registrados.</td>
+                  </tr>
+                  <tr v-for="(phone, index) in phones" :key="index">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ phone.id || 'N/A' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ phone.fecha_alta }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ phone.tipo_telefono }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ phone.nro_telefono }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ phone.a_nombre_de }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ phone.estado }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button @click="editPhone(index)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
+                      <button @click="removePhone(index)" class="ml-4 text-red-600 hover:text-red-900">Eliminar</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end">
+          <button @click="savePhones" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Guardar Teléfonos</button>
+        </div>
       </div>
 
       <!-- Trabajos -->
       <div v-show="activeTab === 3" class="mb-6 p-4 border border-gray-200 rounded-md">
         <h3 class="text-lg font-bold mb-4">Trabajos</h3>
-        <div class="text-gray-500">Aquí irá el formulario de trabajos.</div>
+        <div class="space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Condición Laboral:</label>
+              <select v-model="currentWork.condicion_laboral" class="mt-1 block w-full border-gray-300 rounded-md">
+                <option value="">Seleccione</option>
+                <option value="Activo">Activo</option>
+                <option value="Jubilado">Jubilado</option>
+                <option value="Desempleado">Desempleado</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Fecha Ingreso:</label>
+              <input type="date" v-model="currentWork.fecha_ingreso" class="mt-1 block w-full border-gray-300 rounded-md" />
+            </div>
+            <div></div> <!-- Espacio en blanco para la cuadrícula -->
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Empresa:</label>
+              <div class="flex">
+                <input type="text" v-model="currentWork.empresa" class="mt-1 block w-full border-gray-300 rounded-md" />
+                <button @click="addWork" class="ml-2 bg-green-500 text-white p-2 rounded-md hover:bg-green-600"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M12 3.75a.75.75 0 0 1 .75.75v6.75h6.75a.75.75 0 0 1 0 1.5h-6.75v6.75a.75.75 0 0 1-1.5 0v-6.75H4.5a.75.75 0 0 1 0-1.5h6.75V4.5a.75.75 0 0 1 .75-.75Z" clip-rule="evenodd" /></svg></button>
+                <button @click="clearWork" class="ml-2 bg-red-500 text-white p-2 rounded-md hover:bg-red-600"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5"><path fill-rule="evenodd" d="M16.5 4.478a.75.75 0 0 0-1.06-.943L12 7.022 8.56 3.535a.75.75 0 0 0-1.06.943L10.94 8l-3.44 3.465a.75.75 0 0 0 1.06.943L12 8.978l3.44 3.465a.75.75 0 0 0 1.06-.943L13.06 8l3.44-3.465Z" clip-rule="evenodd" /></svg></button>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Sección:</label>
+              <input type="text" v-model="currentWork.seccion" class="mt-1 block w-full border-gray-300 rounded-md" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Sector Económico:</label>
+              <input type="text" v-model="currentWork.sector_economico" class="mt-1 block w-full border-gray-300 rounded-md" />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700">Cargo:</label>
+              <input type="text" v-model="currentWork.cargo" class="mt-1 block w-full border-gray-300 rounded-md" />
+            </div>
+          </div>
+
+          <div class="mt-6">
+            <h3 class="text-lg font-medium leading-6 text-gray-900 mb-2">Trabajos Registrados</h3>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Fecha Alta</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actual</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Condicion</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Empresa / I...</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Seccion</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sector</th>
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">FCCADO</th>
+                    <th scope="col" class="relative px-6 py-3">
+                      <span class="sr-only">Acciones</span>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  <tr v-if="works.length === 0">
+                    <td colspan="9" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">No hay trabajos registrados.</td>
+                  </tr>
+                  <tr v-for="(work, index) in works" :key="index">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ work.id || 'N/A' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ work.fecha_ingreso }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ work.actual ? 'Sí' : 'No' }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ work.condicion_laboral }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ work.empresa }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ work.seccion }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ work.sector_economico }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ work.cargo }}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      <button @click="editWork(index)" class="text-indigo-600 hover:text-indigo-900">Editar</button>
+                      <button @click="removeWork(index)" class="ml-4 text-red-600 hover:text-red-900">Eliminar</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="mt-6 flex justify-end">
+          <button @click="saveJobs" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">Guardar Trabajos</button>
+        </div>
       </div>
     </div>
   </template>
@@ -226,6 +395,10 @@
       return {
         tabs: ['Datos Personales', 'Direcciones', 'Teléfonos', 'Trabajos'],
         activeTab: 0,
+        personalDataLoaded: false,
+        addressesLoaded: false,
+        phonesLoaded: false,
+        jobsLoaded: false,
         form: {
           tipo_persona: '',
           tipo_identificacion: '',
@@ -253,7 +426,27 @@
           estado: 'Activo',
           fechabaja: ''
         },
+        currentPhone: {
+          id: null,
+          tipo_telefono: '',
+          fecha_alta: new Date().toISOString().slice(0, 10),
+          nro_telefono: '',
+          a_nombre_de: '',
+          estado: 'Activo'
+        },
+        phones: [],
         addresses: [],
+        currentWork: {
+          id: null,
+          condicion_laboral: '',
+          fecha_ingreso: new Date().toISOString().slice(0, 10),
+          empresa: '',
+          seccion: '',
+          sector_economico: '',
+          cargo: '',
+          actual: false
+        },
+        works: [],
         nacionalidades: [],
         ciudades: [],
         barrios: [
@@ -285,7 +478,10 @@
         }
       },
       guardarPersona() {
-        alert('Persona guardada (demo)');
+        // Aquí iría la lógica real para guardar la persona en la base de datos
+        alert('Datos personales guardados (demo)');
+        this.personalDataLoaded = true;
+        this.activeTab = 1; // Mover a la siguiente pestaña después de guardar
       },
       handleMapClick(event) {
         this.currentAddress.latitud = event.latlng.lat;
@@ -315,6 +511,34 @@
           alert('Por favor, complete todos los campos de dirección antes de agregar.');
         }
       },
+      saveAddresses() {
+        // Lógica para guardar direcciones (por ejemplo, enviar a la API)
+        if (this.addresses.length > 0) {
+          alert('Direcciones guardadas (demo)');
+          this.addressesLoaded = true;
+          this.activeTab = 2; // Mover a la siguiente pestaña
+        } else {
+          alert('Debe añadir al menos una dirección para guardar.');
+        }
+      },
+      savePhones() {
+        if (this.phones.length > 0) {
+          alert('Teléfonos guardados (demo)');
+          this.phonesLoaded = true;
+          this.activeTab = 3; // Mover a la siguiente pestaña
+        } else {
+          alert('Debe añadir al menos un teléfono para guardar.');
+        }
+      },
+      saveJobs() {
+        if (this.works.length > 0) {
+          alert('Trabajos guardados (demo)');
+          this.jobsLoaded = true;
+          // Aquí podríamos finalizar el formulario o ir a una pantalla de confirmación
+        } else {
+          alert('Debe añadir al menos un trabajo para guardar.');
+        }
+      },
       clearAddress() {
         this.currentAddress = {
           fecha: new Date().toISOString().slice(0, 10),
@@ -336,6 +560,84 @@
         if (confirm('¿Está seguro de que desea eliminar esta dirección?')) {
           this.addresses.splice(index, 1);
         }
+      },
+      addPhone() {
+        if (this.currentPhone.tipo_telefono && this.currentPhone.fecha_alta && this.currentPhone.nro_telefono && this.currentPhone.a_nombre_de && this.currentPhone.estado) {
+          const newPhone = { ...this.currentPhone };
+          if (!newPhone.id) {
+            newPhone.id = this.phones.length > 0 ? Math.max(...this.phones.map(p => p.id || 0)) + 1 : 1;
+          }
+          const existingIndex = this.phones.findIndex(phone => phone.id === newPhone.id);
+          if (existingIndex !== -1) {
+            this.phones.splice(existingIndex, 1, newPhone);
+          } else {
+            this.phones.push(newPhone);
+          }
+          this.clearPhone();
+        } else {
+          alert('Por favor, complete todos los campos de teléfono antes de agregar.');
+        }
+      },
+      clearPhone() {
+        this.currentPhone = {
+          id: null,
+          tipo_telefono: '',
+          fecha_alta: new Date().toISOString().slice(0, 10),
+          nro_telefono: '',
+          a_nombre_de: '',
+          estado: 'Activo'
+        };
+      },
+      editPhone(index) {
+        this.currentPhone = { ...this.phones[index] };
+      },
+      removePhone(index) {
+        if (confirm('¿Está seguro de que desea eliminar este teléfono?')) {
+          this.phones.splice(index, 1);
+        }
+      },
+      addWork() {
+        if (this.currentWork.condicion_laboral && this.currentWork.fecha_ingreso && this.currentWork.empresa && this.currentWork.seccion && this.currentWork.sector_economico && this.currentWork.cargo) {
+          const newWork = { ...this.currentWork };
+          if (!newWork.id) {
+            newWork.id = this.works.length > 0 ? Math.max(...this.works.map(w => w.id || 0)) + 1 : 1;
+          }
+          const existingIndex = this.works.findIndex(work => work.id === newWork.id);
+          if (existingIndex !== -1) {
+            this.works.splice(existingIndex, 1, newWork);
+          } else {
+            this.works.push(newWork);
+          }
+          this.clearWork();
+        } else {
+          alert('Por favor, complete todos los campos de trabajo antes de agregar.');
+        }
+      },
+      clearWork() {
+        this.currentWork = {
+          id: null,
+          condicion_laboral: '',
+          fecha_ingreso: new Date().toISOString().slice(0, 10),
+          empresa: '',
+          seccion: '',
+          sector_economico: '',
+          cargo: '',
+          actual: false
+        };
+      },
+      editWork(index) {
+        this.currentWork = { ...this.works[index] };
+      },
+      removeWork(index) {
+        if (confirm('¿Está seguro de que desea eliminar este trabajo?')) {
+          this.works.splice(index, 1);
+        }
+      },
+      getTabStatus(index) {
+        return true; // Todas las pestañas están siempre habilitadas
+      },
+      selectTab(index) {
+        this.activeTab = index; // Permitir la selección de cualquier pestaña
       }
     }
   }
